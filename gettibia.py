@@ -40,4 +40,4 @@ async def get_character(name: str):
         "source": "tibia.com",
         "url": url,
         "character": character
-    }
+    }'''
