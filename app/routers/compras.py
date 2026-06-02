@@ -33,6 +33,10 @@ def listar_compras():
 def buscar_compra(id_compra: int):
     with Session(engine) as session:
         compra = session.get(Compra, id_compra)
+
+        if compra is None:
+            raise HTTPException(status_code=404, detail="Compra não encontrada")
+
         return compra
 
 
