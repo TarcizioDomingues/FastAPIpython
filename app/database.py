@@ -1,9 +1,13 @@
-from sqlmodel import SQLModel, create_engine, Session
+import os
 
-sqlite_file_name = "compras.db"
-sqlite_url = f"sqlite:///{sqlite_file_name}"
+from dotenv import load_dotenv
+from sqlmodel import SQLModel, Session, create_engine
 
-engine = create_engine(sqlite_url, echo=True)
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+engine = create_engine(DATABASE_URL, echo=True)
 
 
 def create_db_and_tables():
