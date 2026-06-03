@@ -1,7 +1,10 @@
 # API de Compras - FastAPI
 
-Projeto CRUD de compras usando:
+Projeto CRUD desenvolvido para estudo de APIs REST utilizando FastAPI.
 
+## Tecnologias
+
+- Python
 - FastAPI
 - SQLModel
 - SQLite
@@ -9,16 +12,20 @@ Projeto CRUD de compras usando:
 
 ## Funcionalidades
 
-- Criar compras
+- Criar compra
 - Listar compras
-- Atualizar compras
-- Deletar compras
+- Buscar compra por ID
+- Atualizar compra
+- Deletar compra
+- Busca por nome do produto
+- Validações com Pydantic
+- Tratamento de erros HTTP
 
 ## Instalação
 
 ```bash
 pip install -r requirements.txt
-```
+
 
 ## Rodar projeto
 
