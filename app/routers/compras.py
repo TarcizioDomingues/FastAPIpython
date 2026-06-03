@@ -1,108 +1,150 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status, Depends
 from sqlmodel import Session, select, func
 
-
-from app.database import engine
-from app.models import Compra, CompraCreate
+from app.database import get_session
+from app.models import Compra
+from app.schemas import CompraCreate, CompraRead
 
 router = APIRouter()
 
 
-from fastapi import HTTPException
+@router.post("/compras", status_code=status.HTTP_201_CREATED)
+def criar_compra(compra: CompraCreate, session: Session = Depends(get_session)):
+    compra_existente = session.exec(
+        select(Compra).where(func.lower(Compra.item) == compra.item.lower())
+    ).first()
 
-
-@router.post("/compras")
-def criar_compra(compra: CompraCreate):
-
-    with Session(engine) as session:
-
-        compra_existente = session.exec(
-            select(Compra).where(Compra.item == compra.item.upper())
-        ).first()
-
-        if compra_existente:
-            raise HTTPException(
-                status_code=409, detail="Produto já cadastrado no sistema"
-            )
-
-        nova_compra = Compra(
-            item=compra.item,
-            preco_unitario=compra.preco_unitario,
-            quantidade=compra.quantidade,
-            valor_total=compra.preco_unitario * compra.quantidade,
+    if compra_existente:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "erro": "Produto já cadastrado no sistema",
+                "item": compra.item.upper(),
+            },
         )
 
-        session.add(nova_compra)
-        session.commit()
-        session.refresh(nova_compra)
+    nova_compra = Compra(
+        item=compra.item.upper(),
+        preco_unitario=compra.preco_unitario,
+        quantidade=compra.quantidade,
+        valor_total=compra.preco_unitario * compra.quantidade,
+    )
 
-        return nova_compra
+    session.add(nova_compra)
+    session.commit()
+    session.refresh(nova_compra)
+
+    return {
+        "mensagem": "Compra cadastrada com sucesso",
+        "compra": nova_compra,
+    }
 
 
 @router.get("/compras")
-def listar_compras(item: str | None = None):
-    with Session(engine) as session:
+def listar_compras(item: str | None = None, session: Session = Depends(get_session)):
+    query = select(Compra)
 
-        query = select(Compra)
+    if item:
+        query = query.where(func.lower(Compra.item).contains(item.lower()))
 
-        if item:
-            query = query.where(func.lower(Compra.item).contains(item.lower()))
+    compras = session.exec(query).all()
 
-        return session.exec(query).all()
+    if not compras:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "erro": "Nenhuma compra encontrada",
+                "filtro": item,
+            },
+        )
+
+    return {
+        "total": len(compras),
+        "compras": compras,
+    }
 
 
-@router.get("/compras/{id_compra}")
-def buscar_compra(id_compra: int):
-    with Session(engine) as session:
-        compra = session.get(Compra, id_compra)
+@router.get("/compras/{id_compra}", response_model=CompraRead)
+def buscar_compra(id_compra: int, session: Session = Depends(get_session)):
+    compra = session.get(Compra, id_compra)
 
-        if compra is None:
-            raise HTTPException(status_code=404, detail="Compra não encontrada")
+    if compra is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "erro": "Compra não encontrada",
+                "id": id_compra,
+            },
+        )
 
-        return {
-            "id": compra.id,
-            "item": compra.item,
-            "quantidade": compra.quantidade,
-            "preco_unitario": compra.preco_unitario,
-            "valor_total": compra.preco_unitario * compra.quantidade,
-        }
+    return compra
 
 
 @router.put("/compras/{id_compra}")
-def atualizar_compra(id_compra: int, compra_atualizada: Compra):
-    with Session(engine) as session:
-        compra = session.get(Compra, id_compra)
+def atualizar_compra(
+    id_compra: int,
+    compra_atualizada: CompraCreate,
+    session: Session = Depends(get_session),
+):
+    compra = session.get(Compra, id_compra)
 
-        if compra is None:
-            raise HTTPException(
-                status_code=404, detail=f"Compra {id_compra} não encontrada"
-            )
-
-        compra.item = compra_atualizada.item
-        compra.preco_unitario = compra_atualizada.preco_unitario
-        compra.quantidade = compra_atualizada.quantidade
-        compra.valor_total = (
-            compra_atualizada.preco_unitario * compra_atualizada.quantidade
+    if compra is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "erro": "Compra não encontrada",
+                "id": id_compra,
+            },
         )
 
-        session.add(compra)
-        session.commit()
-        session.refresh(compra)
+    compra_existente = session.exec(
+        select(Compra).where(
+            func.lower(Compra.item) == compra_atualizada.item.lower(),
+            Compra.id != id_compra,
+        )
+    ).first()
 
-        return compra
+    if compra_existente:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "erro": "Produto já cadastrado no sistema",
+                "item": compra_atualizada.item.upper(),
+            },
+        )
+
+    compra.item = compra_atualizada.item.upper()
+    compra.preco_unitario = compra_atualizada.preco_unitario
+    compra.quantidade = compra_atualizada.quantidade
+    compra.valor_total = compra_atualizada.preco_unitario * compra_atualizada.quantidade
+
+    session.add(compra)
+    session.commit()
+    session.refresh(compra)
+
+    return {
+        "mensagem": "Compra atualizada com sucesso",
+        "compra": compra,
+    }
 
 
 @router.delete("/compras/{id_compra}")
-def deletar_compra(id_compra: int):
-    with Session(engine) as session:
-        compra = session.get(Compra, id_compra)
+def deletar_compra(id_compra: int, session: Session = Depends(get_session)):
+    compra = session.get(Compra, id_compra)
 
-        if compra is None:
-            raise HTTPException(
-                status_code=404, detail=f"Compra {id_compra} não encontrada"
-            )
+    if compra is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "erro": "Compra não encontrada",
+                "id": id_compra,
+            },
+        )
 
-        session.delete(compra)
-        session.commit()
+    session.delete(compra)
+    session.commit()
 
-        return {"mensagem": "Compra deletada com sucesso"}
+    return {
+        "mensagem": "Compra deletada com sucesso",
+        "id": id_compra,
+    }
