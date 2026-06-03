@@ -1,5 +1,29 @@
+# Virtual Environment
 venv/
+.env
+
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+
+# SQLite
 *.db
-*.sqbpro
+*.sqlite3
+
+# VS Code
+.vscode/
+
+# Pytest
+.pytest_cache/
+
+# Mypy
+.mypy_cache/
+
+# Coverage
+.coverage
+htmlcov/
+
+# OS
+.DS_Store
+Thumbs.db
