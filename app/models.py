@@ -6,4 +6,5 @@ class Compra(SQLModel, table=True):
     item: str
     preco_unitario: float
     quantidade: int
+    embalagem: str
     valor_total: float = Field(default=0)

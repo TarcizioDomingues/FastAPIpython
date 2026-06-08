@@ -7,15 +7,11 @@ class CompraBase(SQLModel):
     )
     preco_unitario: float = Field(gt=0, description="Preço deve ser maior que zero")
     quantidade: int = Field(gt=0, description="Quantidade deve ser maior que zero")
+    embalagem: str | None = None
 
 
 class CompraCreate(CompraBase):
     pass
-
-
-class CompraRead(CompraBase):
-    id: int
-    valor_total: float
 
 
 class CompraRead(CompraBase):
