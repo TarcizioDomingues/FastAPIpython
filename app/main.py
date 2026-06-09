@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from sqlmodel import SQLModel
+from app.routers import auth
 
 from app.database import engine
 from app.routers.compras import router as compras_router
@@ -13,3 +14,4 @@ def criar_banco():
 
 
 app.include_router(compras_router)
+app.include_router(auth.router)

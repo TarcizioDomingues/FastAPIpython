@@ -17,3 +17,13 @@ class CompraCreate(CompraBase):
 class CompraRead(CompraBase):
     id: int
     valor_total: float
+
+
+class UsuarioCreate(SQLModel):
+    username: str
+    senha: str
+
+
+class UsuarioRead(SQLModel):
+    id: int
+    username: str
