@@ -27,3 +27,13 @@ class UsuarioCreate(SQLModel):
 class UsuarioRead(SQLModel):
     id: int
     username: str
+
+
+class UsuarioLogin(SQLModel):
+    username: str
+    senha: str
+
+
+class Token(SQLModel):
+    access_token: str
+    token_type: str
